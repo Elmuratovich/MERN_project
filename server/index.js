@@ -1,5 +1,6 @@
 const express = require('express');
 const mongoose = require('mongoose');
+const bcrypt = require('bcrypt');
 
 const app = express();
 
@@ -24,21 +25,56 @@ app.post("/signup", (req, res) => {
             if(savedUser) {
                 return res.status(400).json({error:'User already exists'});
             }
-            const user = new User({
-                name: name,
-                email: email,
-                password: password
-            });
-            user.save()
-                .then((user) => {
-                    res.json({
-                        message: 'User created successfully',
-                        user
+            bcrypt.hash(password, 10)
+                .then(hash => {
+                    const user = new User({
+                        name: name,
+                        email: email,
+                        password: hash
                     });
+                    user.save()
+                        .then((user) => {
+                            res.json({
+                                message: 'User created successfully',
+                                user
+                            });
+                        })
+                        .catch(err => {
+                            console.log(err);
+                        })
+                })
+
+        })
+})
+
+app.post("/login", (req, res) => {
+    const {email, password} = req.body;
+    if(!email || !password) {
+        res.status(400).json({
+            message: "Please fill all the fields"
+        });
+    }
+    User.findOne({email})
+        .then(user => {
+            if(!user){
+                return res.status(400).json({error: "User does not exist"});
+            }
+            bcrypt.compare(password, user.password)
+                .then(isMatch => {
+                    if(!isMatch) {
+                        return res.status(400).json({error: "Invalid credentials"});
+                    }
+                    else{
+                        res.json({
+                            message: "Login successful",
+                            user
+                        });
+                    }
                 })
                 .catch(err => {
                     console.log(err);
                 })
+
         })
 })
 
