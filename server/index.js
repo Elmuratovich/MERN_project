@@ -78,6 +78,8 @@ app.post("/login", (req, res) => {
         })
 })
 
+// SERVER PORT
+
 app.listen(5000, () =>{
     console.log('Server started on port 5000');
 });
